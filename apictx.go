@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io"
 	"log/slog"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type User interface {
@@ -63,6 +64,14 @@ type Context struct {
 	CurrentUser User
 	writer      http.ResponseWriter
 	request     *http.Request
+}
+
+func NewContext(w http.ResponseWriter, r *http.Request, user User) Context {
+	return Context{
+		CurrentUser: user,
+		writer:      w,
+		request:     r,
+	}
 }
 
 func (c *Context) Request() *http.Request {
@@ -176,13 +185,13 @@ func Handler(c ContextFunc) http.HandlerFunc {
 
 		err := c(&ctx)
 		if err != nil {
-			handleError(w, r, err)
+			HandleError(w, r, err)
 			return
 		}
 	}
 }
 
-func handleError(w http.ResponseWriter, r *http.Request, err error, overRideStatusCode ...int) {
+func HandleError(w http.ResponseWriter, r *http.Request, err error, overRideStatusCode ...int) {
 	var errRes ApiErrorResponse
 	statusCode := http.StatusInternalServerError
 
